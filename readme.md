@@ -1,60 +1,63 @@
-# 🌌 Nebula Visualizer
+# Nebula Fractal Visualizer 🌌✨
 
-A **Milkdrop-style audio visualizer** for your browser. Reacts to **microphone** or **tab audio** in real-time with neon particles, waveforms, and pulsating beats.  
+An audio-reactive, neon fractal visualizer that reacts to your microphone or tab audio in real-time.  
+Featuring swirling nebulae, bright neon fractals, particles, and center pulse effects—optimized for **120 FPS**.
 
 ---
 
 ## Features
 
-- 🎤 Microphone input  
-- 🖥 Tab audio capture (Chrome/Edge only)  
-- ✨ Particle system + frequency bars + waveform + center pulse  
-- ⚡ Smooth, optimized animations  
-- 🖤 Dark, neon-inspired UI  
+- **Audio Reactive**: Works with microphone input or tab audio (Chrome/Edge only).  
+- **Bright Neon Fractals**: Recursive fractals glow with vivid neon colors, intensifying with audio intensity.  
+- **Swirling Nebula**: Smooth neon swirls orbit the center, dynamically responding to sound.  
+- **Particles & Glow**: Hundreds of particles drift and glow, synced to bass, mids, and treble.  
+- **Center Pulse**: Radiant neon pulses emanate from the center, reacting to overall audio energy.  
+- **Optimized for 120 FPS**: Smoothest visual experience with high frame-rate support.  
+- **Responsive Design**: Works on any screen size, including mobile devices.
 
 ---
 
-## Quick Start
+## How to Use
 
-1. Open `index.html` in **Chrome** or **Edge**  
-2. Click **Microphone** or **Tab Audio**  
-3. Watch the visualizer react to sound  
-4. Press **Stop** to reset  
-
-> ⚠️ System audio capture is **not available** in browsers. Tab audio works only in Chromium-based browsers.  
+1. Open the visualizer in a modern browser (Chrome or Edge recommended).  
+2. Select **Microphone** or **Tab Audio**.  
+3. Watch the fractals, swirls, and particles react to your audio.  
+4. Click **Stop** anytime to pause the visualization.
 
 ---
 
 ## Controls
 
-| Button | Action |
-|--------|--------|
-| **Microphone** | Start microphone visualization |
-| **Tab Audio** | Capture tab audio (Chrome/Edge) |
-| **Stop** | Stop visualization & reset canvas |
-| **Mode Indicator** | Shows current audio source |
+| Button        | Function                                    |
+|---------------|--------------------------------------------|
+| 🎤 Microphone | Activate microphone audio visualization    |
+| 🖥️ Tab Audio  | Visualize audio from another browser tab   |
+| ⏹️ Stop       | Stop the visualization                      |
 
 ---
 
-## Customization
+## Requirements
 
-- `PARTICLE_COUNT` – number of particles  
-- `FFT_SIZE`, `SMOOTHING` – audio analysis settings  
-- Colors – modify `hsla()` values in script  
+- Modern browser with Web Audio API support  
+- Chrome or Edge for tab audio visualization  
 
 ---
 
-## Browser Support
+## Installation
 
-| Browser | Microphone | Tab Audio |
-|---------|:----------:|:---------:|
-| Chrome  | ✅ | ✅ |
-| Edge    | ✅ | ✅ |
-| Firefox | ✅ | ❌ |
-| Safari  | ✅ | ❌ |
+Simply open `index.html` in your browser. No additional setup is needed.
+
+---
+
+## Neon Fractal Notes
+
+- Fractals are drawn recursively from the center of the canvas.  
+- Branch color, width, and opacity are dynamically calculated based on audio intensity.  
+- Neon swirls orbit around the fractals for an immersive audio-reactive effect.  
+- The center pulse uses radial gradients for glowing neon highlights.
 
 ---
 
 ## License
 
-MIT License – free to use and modify.  
+MIT License — feel free to remix, fork, and neonify it further! 💡
