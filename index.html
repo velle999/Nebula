@@ -1,568 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Visualizer | Simplified</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            overflow: hidden;
-            background: #000;
-            color: white;
-            height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        header {
-            padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.85);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            z-index: 100;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        h1 {
-            font-size: 1.8rem;
-            background: linear-gradient(45deg, #ff00cc, #3333ff, #00ccff, #00ff9d);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-weight: 700;
-        }
-        .controls { display: flex; gap: 12px; align-items: center; }
-        button {
-            background: linear-gradient(45deg, #2c2c3a, #1a1a25);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 8px 16px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        button:hover:not(:disabled) { transform: translateY(-1px); }
-        button:active:not(:disabled) { transform: translateY(1px); }
-        button.primary { background: linear-gradient(45deg, #6a11cb, #2575fc); border: none; }
-        button.danger { background: linear-gradient(45deg, #ff416c, #ff4b2b); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .mode-indicator {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            background: rgba(100, 100, 100, 0.15);
-            border: 1px solid rgba(150, 150, 150, 0.3);
-        }
-        .mode-mic { background: rgba(255, 100, 100, 0.15); border-color: rgba(255, 100, 100, 0.4); }
-        .mode-tab { background: rgba(100, 150, 255, 0.15); border-color: rgba(100, 150, 255, 0.4); }
-        canvas {
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 5, 15, 0.92);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-            transition: opacity 0.4s ease;
-        }
-        .overlay.hidden { opacity: 0; pointer-events: none; }
-        .overlay h2 {
-            font-size: 3.2rem;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #ff00cc, #3333ff, #00ccff, #00ff9d);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 15px rgba(100, 200, 255, 0.6);
-        }
-        .instructions {
-            background: rgba(20, 25, 40, 0.85);
-            border: 1px solid rgba(100, 150, 255, 0.3);
-            border-radius: 15px;
-            padding: 25px;
-            max-width: 650px;
-            margin: 20px;
-        }
-        .instructions h3 {
-            color: #6a5af9;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-        }
-        .instructions ul { text-align: left; padding-left: 25px; margin-top: 10px; line-height: 1.6; }
-        .instructions li { margin-bottom: 8px; }
-        .browser-warning {
-            background: rgba(40, 20, 20, 0.8);
-            border: 1px solid rgba(255, 100, 100, 0.4);
-            border-radius: 12px;
-            padding: 18px;
-            margin-top: 25px;
-            max-width: 600px;
-        }
-        footer {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            text-align: center;
-            z-index: 20;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.9rem;
-            padding: 0 20px;
-        }
-        @media (max-width: 768px) {
-            .controls { flex-direction: column; align-items: stretch; gap: 10px; }
-            .overlay h2 { font-size: 2.3rem; }
-            button { width: 100%; justify-content: center; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nebula Visualizer | 120FPS GPU Trails</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { overflow:hidden; background:#000; color:white; height:100vh; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+header { padding:15px 20px; background:rgba(0,0,0,0.85); border-bottom:1px solid rgba(255,255,255,0.1); position:relative; z-index:100; display:flex; justify-content:space-between; align-items:center; }
+h1 { font-size:1.8rem; background:linear-gradient(45deg,#ff00cc,#3333ff,#00ccff,#00ff9d); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:700; }
+.controls { display:flex; gap:12px; align-items:center; }
+button { background: linear-gradient(45deg,#2c2c3a,#1a1a25); color:white; border:1px solid rgba(255,255,255,0.15); padding:8px 16px; border-radius:30px; cursor:pointer; font-family:inherit; font-weight:500; transition:all 0.2s; display:flex; align-items:center; gap:8px; }
+button:hover:not(:disabled){ transform:translateY(-1px); }
+button:active:not(:disabled){ transform:translateY(1px); }
+button.primary{ background: linear-gradient(45deg,#6a11cb,#2575fc); border:none; }
+button.danger{ background: linear-gradient(45deg,#ff416c,#ff4b2b); }
+button:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+.mode-indicator { padding:4px 12px; border-radius:20px; font-size:0.85rem; font-weight:500; background:rgba(100,100,100,0.15); border:1px solid rgba(150,150,150,0.3); }
+.mode-mic{ background: rgba(255,100,100,0.15); border-color: rgba(255,100,100,0.4); }
+.mode-tab{ background: rgba(100,150,255,0.15); border-color: rgba(100,150,255,0.4); }
+canvas{ display:block; position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; }
+.overlay{ position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,5,15,0.92); z-index:10; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; transition:opacity 0.4s ease; }
+.overlay.hidden{ opacity:0; pointer-events:none; }
+.overlay h2{ font-size:3.2rem; margin-bottom:20px; background:linear-gradient(45deg,#ff00cc,#3333ff,#00ccff,#00ff9d); -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:0 0 15px rgba(100,200,255,0.6); }
+.instructions{ background: rgba(20,25,40,0.85); border:1px solid rgba(100,150,255,0.3); border-radius:15px; padding:25px; max-width:650px; margin:20px; }
+.instructions h3{ color:#6a5af9; margin-bottom:15px; display:flex; align-items:center; gap:10px; justify-content:center; }
+.instructions ul{ text-align:left; padding-left:25px; margin-top:10px; line-height:1.6; }
+.instructions li{ margin-bottom:8px; }
+.browser-warning{ background: rgba(40,20,20,0.8); border:1px solid rgba(255,100,100,0.4); border-radius:12px; padding:18px; margin-top:25px; max-width:600px; }
+footer{ position:absolute; bottom:20px; width:100%; text-align:center; z-index:20; color:rgba(255,255,255,0.6); font-size:0.9rem; padding:0 20px; }
+@media(max-width:768px){ .controls{ flex-direction:column; align-items:stretch; gap:10px; } .overlay h2{ font-size:2.3rem; } button{ width:100%; justify-content:center; } }
+</style>
 </head>
 <body>
-    <header>
-        <h1>NEBULA VISUALIZER</h1>
-        <div class="controls">
-            <div class="mode-indicator" id="modeIndicator">No Audio Source</div>
-            <button id="micButton" class="primary">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
-                Microphone
-            </button>
-            <button id="tabButton">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="7" y1="3" x2="7" y2="21"></line>
-                    <line x1="17" y1="3" x2="17" y2="21"></line>
-                    <line x1="3" y1="7" x2="21" y2="7"></line>
-                    <line x1="3" y1="17" x2="21" y2="17"></line>
-                </svg>
-                Tab Audio (Chrome/Edge)
-            </button>
-            <button id="stopButton" class="danger" disabled>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                </svg>
-                Stop
-            </button>
-        </div>
-    </header>
-    
-    <canvas id="visualizer"></canvas>
-    
-    <div class="overlay" id="welcomeOverlay">
-        <h2>Nebula Visualizer</h2>
-        <div class="instructions">
-            <h3>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12" y2="8"></line>
-                </svg>
-                How to Use
-            </h3>
-            <ul>
-                <li><strong>Microphone:</strong> Visualize your voice or external audio</li>
-                <li><strong>Tab Audio (Chrome/Edge):</strong> Visualize audio playing in another browser tab</li>
-                <li>Visualizer reacts to bass, mids, and treble frequencies in real-time</li>
-                <li>Click "Stop" anytime to pause audio analysis</li>
-            </ul>
-        </div>
-        <div class="browser-warning">
-            ⚠️ Browsers cannot access system audio directly due to security restrictions. 
-            Tab audio capture requires Chrome/Edge and will prompt you to select a tab.
-        </div>
-    </div>
-    
-    <footer>
-        <p>Optimized Milkdrop-style visualizer • Works with microphone or tab audio • No system audio access possible in browsers</p>
-    </footer>
+<header>
+<h1>NEBULA VISUALIZER</h1>
+<div class="controls">
+<div class="mode-indicator" id="modeIndicator">No Audio Source</div>
+<button id="micButton" class="primary">🎤 Microphone</button>
+<button id="tabButton">🖥️ Tab Audio</button>
+<button id="stopButton" class="danger" disabled>⏹️ Stop</button>
+</div>
+</header>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // DOM Elements
-            const canvas = document.getElementById('visualizer');
-            const ctx = canvas.getContext('2d', { alpha: false });
-            const welcomeOverlay = document.getElementById('welcomeOverlay');
-            const micButton = document.getElementById('micButton');
-            const tabButton = document.getElementById('tabButton');
-            const stopButton = document.getElementById('stopButton');
-            const modeIndicator = document.getElementById('modeIndicator');
-            
-            // Set canvas size
-            function resizeCanvas() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
-            
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
-            
-            // Audio context and nodes
-            let audioContext = null;
-            let analyzer = null;
-            let sourceNode = null;
-            let stream = null;
-            let animationFrameId = null;
-            let isVisualizing = false;
-            
-            // Visualizer settings
-            const PARTICLE_COUNT = 60; // Reduced for performance
-            const FFT_SIZE = 1024;
-            const SMOOTHING = 0.85;
-            
-            // Particle system
-            const particles = [];
-            class Particle {
-                constructor() {
-                    this.reset();
-                }
-                reset() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height;
-                    this.size = Math.random() * 2 + 0.8;
-                    this.speedX = (Math.random() - 0.5) * 1.5;
-                    this.speedY = (Math.random() - 0.5) * 1.5;
-                    this.hue = Math.random() * 360;
-                    this.alpha = Math.random() * 0.4 + 0.2;
-                    this.life = 1.0;
-                }
-                update(intensity, freqData) {
-                    // Gentle movement influenced by audio
-                    this.speedX += (Math.random() - 0.5) * intensity * 0.3;
-                    this.speedY += (Math.random() - 0.5) * intensity * 0.3;
-                    
-                    // Dampen speed to prevent explosion
-                    this.speedX *= 0.95;
-                    this.speedY *= 0.95;
-                    
-                    // Update position
-                    this.x += this.speedX;
-                    this.y += this.speedY;
-                    
-                    // Boundary handling
-                    if (this.x < 0 || this.x > canvas.width) this.speedX *= -0.7;
-                    if (this.y < 0 || this.y > canvas.height) this.speedY *= -0.7;
-                    
-                    // Keep on screen
-                    this.x = Math.max(0, Math.min(canvas.width, this.x));
-                    this.y = Math.max(0, Math.min(canvas.height, this.y));
-                    
-                    // Update color based on position frequency
-                    const freqIndex = Math.floor((this.x / canvas.width) * (freqData.length - 1));
-                    const freqValue = freqData[Math.min(freqIndex, freqData.length - 1)] || 0;
-                    this.hue = (freqValue / 255) * 360;
-                    
-                    // Particle life cycle
-                    this.life -= 0.003;
-                    if (this.life <= 0) this.reset();
-                }
-                draw(ctx) {
-                    // Solid color instead of expensive gradients
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
-                    ctx.fillStyle = `hsla(${this.hue}, 85%, 65%, ${this.alpha * this.life})`;
-                    ctx.fill();
-                }
-            }
-            
-            // Initialize particles
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                particles.push(new Particle());
-            }
-            
-            // Drawing function
-            function drawVisualizer() {
-                if (!analyzer || !isVisualizing) return;
-                
-                // Get frequency and time data
-                const bufferLength = analyzer.frequencyBinCount;
-                const freqData = new Uint8Array(bufferLength);
-                analyzer.getByteFrequencyData(freqData);
-                
-                const timeData = new Uint8Array(analyzer.fftSize);
-                analyzer.getByteTimeDomainData(timeData);
-                
-                // Calculate audio intensity
-                let sum = 0;
-                for (let i = 0; i < bufferLength; i++) {
-                    sum += freqData[i];
-                }
-                const avg = sum / bufferLength;
-                const intensity = Math.min(1.0, avg / 180);
-                
-                // Clear canvas with fade effect
-                ctx.fillStyle = `rgba(5, 5, 15, ${0.18 + intensity * 0.08})`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw frequency bars
-                const barCount = Math.min(128, bufferLength);
-                const barWidth = canvas.width / barCount;
-                const centerY = canvas.height / 2;
-                
-                for (let i = 0; i < barCount; i++) {
-                    const barHeight = (freqData[i] / 255) * (canvas.height * 0.5) * (0.7 + intensity * 0.5);
-                    const hue = (i / barCount) * 360;
-                    
-                    ctx.fillStyle = `hsla(${hue}, 90%, 60%, ${0.6 + intensity * 0.3})`;
-                    ctx.fillRect(i * barWidth, centerY - barHeight / 2, barWidth - 1.5, barHeight);
-                }
-                
-                // Draw waveform
-                ctx.beginPath();
-                const sliceWidth = canvas.width / analyzer.fftSize;
-                let x = 0;
-                
-                // Draw every 2nd point for performance
-                for (let i = 0; i < analyzer.fftSize; i += 2) {
-                    const v = timeData[i] / 128.0;
-                    const y = v * (canvas.height / 4) + centerY;
-                    
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                    x += sliceWidth * 2;
-                }
-                
-                ctx.strokeStyle = `rgba(255, 255, 255, ${0.7 + intensity * 0.3})`;
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-                
-                // Update & draw particles
-                for (let i = 0; i < particles.length; i++) {
-                    particles[i].update(intensity, freqData);
-                    particles[i].draw(ctx);
-                }
-                
-                // Draw center pulse
-                const pulseRadius = 35 + intensity * 80;
-                const pulseAlpha = 0.4 + intensity * 0.35;
-                
-                const pulseGradient = ctx.createRadialGradient(
-                    canvas.width/2, canvas.height/2, 0,
-                    canvas.width/2, canvas.height/2, pulseRadius
-                );
-                pulseGradient.addColorStop(0, `rgba(255, 255, 255, ${pulseAlpha})`);
-                pulseGradient.addColorStop(0.4, `rgba(100, 200, 255, ${pulseAlpha * 0.8})`);
-                pulseGradient.addColorStop(1, 'transparent');
-                
-                ctx.beginPath();
-                ctx.arc(canvas.width/2, canvas.height/2, pulseRadius, 0, Math.PI * 2);
-                ctx.fillStyle = pulseGradient;
-                ctx.fill();
-                
-                // Continue animation
-                animationFrameId = requestAnimationFrame(drawVisualizer);
-            }
-            
-            // Setup microphone
-            async function setupMicrophone() {
-                try {
-                    stopVisualization();
-                    
-                    stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
-                        } 
-                    });
-                    
-                    setupAudioContext(stream);
-                    
-                    modeIndicator.textContent = 'Microphone Active';
-                    modeIndicator.className = 'mode-indicator mode-mic';
-                    micButton.disabled = true;
-                    tabButton.disabled = true;
-                    stopButton.disabled = false;
-                    welcomeOverlay.classList.add('hidden');
-                    
-                    isVisualizing = true;
-                    particles.forEach(p => p.reset());
-                    animationFrameId = requestAnimationFrame(drawVisualizer);
-                } catch (err) {
-                    console.error('Microphone error:', err);
-                    alert('Microphone error: ' + (err.message || err.name));
-                    modeIndicator.textContent = 'Mic Error';
-                    micButton.disabled = false;
-                    tabButton.disabled = false;
-                }
-            }
-            
-            // Setup tab audio capture (simplified approach)
-            async function setupTabAudio() {
-                try {
-                    stopVisualization();
-                    
-                    if (!navigator.mediaDevices.getDisplayMedia) {
-                        throw new Error('Tab audio only works in Chrome/Edge');
-                    }
-                    
-                    // Request both audio and video (required for audio to work in Chrome)
-                    stream = await navigator.mediaDevices.getDisplayMedia({
-                        audio: true,
-                        video: true  // Required to enable audio
-                    });
-                    
-                    // Important: Keep video stream active (required for audio in Chrome)
-                    const videoTrack = stream.getVideoTracks()[0];
-                    if (videoTrack) {
-                        videoTrack.onended = () => {
-                            // If user stops sharing manually, stop visualization
-                            stopVisualization();
-                        };
-                    }
-                    
-                    setupAudioContext(stream);
-                    
-                    modeIndicator.textContent = 'Tab Audio Active';
-                    modeIndicator.className = 'mode-indicator mode-tab';
-                    micButton.disabled = true;
-                    tabButton.disabled = true;
-                    stopButton.disabled = false;
-                    welcomeOverlay.classList.add('hidden');
-                    
-                    isVisualizing = true;
-                    particles.forEach(p => p.reset());
-                    animationFrameId = requestAnimationFrame(drawVisualizer);
-                } catch (err) {
-                    console.error('Tab audio error:', err);
-                    if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
-                        alert('You cancelled the tab selection or denied permission. Please try again and select a tab with audio playing.');
-                    } else {
-                        alert('Tab audio error: ' + (err.message || err.name));
-                    }
-                    modeIndicator.textContent = 'Tab Audio Error';
-                    micButton.disabled = false;
-                    tabButton.disabled = false;
-                }
-            }
-            
-            // Setup audio context
-            function setupAudioContext(audioStream) {
-                if (!audioContext || audioContext.state === 'closed') {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-                
-                analyzer = audioContext.createAnalyser();
-                analyzer.fftSize = FFT_SIZE;
-                analyzer.smoothingTimeConstant = SMOOTHING;
-                
-                sourceNode = audioContext.createMediaStreamSource(audioStream);
-                sourceNode.connect(analyzer);
-            }
-            
-            // Stop visualization
-            function stopVisualization() {
-                isVisualizing = false;
-                
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-                
-                if (stream) {
-                    stream.getTracks().forEach(track => {
-                        try { track.stop(); } catch (e) {}
-                    });
-                    stream = null;
-                }
-                
-                if (sourceNode) {
-                    try { sourceNode.disconnect(); } catch (e) {}
-                    sourceNode = null;
-                }
-                
-                if (analyzer) {
-                    try { analyzer.disconnect(); } catch (e) {}
-                    analyzer = null;
-                }
-                
-                // Clear canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#050515';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Reset UI
-                modeIndicator.textContent = 'No Audio Source';
-                modeIndicator.className = 'mode-indicator';
-                micButton.disabled = false;
-                tabButton.disabled = !!(navigator.userAgent.includes('Chrome') || navigator.userAgent.includes('Edg'));
-                stopButton.disabled = true;
-            }
-            
-            // Enable tab button for Chromium browsers
-            if (navigator.userAgent.includes('Chrome') || navigator.userAgent.includes('Edg')) {
-                tabButton.disabled = false;
-            } else {
-                tabButton.disabled = true;
-                tabButton.title = 'Only available in Chrome or Edge browsers';
-            }
-            
-            // Event listeners
-            micButton.addEventListener('click', setupMicrophone);
-            tabButton.addEventListener('click', setupTabAudio);
-            stopButton.addEventListener('click', stopVisualization);
-            
-            // Initial canvas fill
-            ctx.fillStyle = '#050515';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw initial decorative elements
-            function drawInitial() {
-                ctx.fillStyle = 'rgba(5, 5, 15, 0.97)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                particles.forEach(p => {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size * 1.8, 0, Math.PI * 2);
-                    ctx.fillStyle = `hsla(${p.hue}, 70%, 60%, ${p.alpha * 0.6})`;
-                    ctx.fill();
-                });
-                
-                for (let i = 1; i <= 3; i++) {
-                    const radius = 40 * i;
-                    ctx.beginPath();
-                    ctx.arc(canvas.width/2, canvas.height/2, radius, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(100, 180, 255, ${0.08 / i})`;
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
-                }
-                
-                requestAnimationFrame(drawInitial);
-            }
-            drawInitial();
-        });
-    </script>
+<canvas id="visualizer"></canvas>
+
+<div class="overlay" id="welcomeOverlay">
+<h2>Nebula Visualizer</h2>
+<div class="instructions">
+<h3>How to Use</h3>
+<ul>
+<li><strong>Microphone:</strong> Visualize your voice or external audio</li>
+<li><strong>Tab Audio (Chrome/Edge):</strong> Visualize audio playing in another tab</li>
+<li>Visualizer reacts to bass, mids, and treble frequencies in real-time</li>
+<li>Click "Stop" anytime to pause audio analysis</li>
+</ul>
+</div>
+<div class="browser-warning">⚠️ Tab audio requires Chrome/Edge; browsers cannot access system audio directly.</div>
+</div>
+
+<footer>
+<p>Optimized GPU Particle Trails • Milkdrop-style visualizer • Works with microphone or tab audio</p>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+const canvas=document.getElementById('visualizer');
+const ctx=canvas.getContext('2d', { alpha: false });
+const welcomeOverlay=document.getElementById('welcomeOverlay');
+const micButton=document.getElementById('micButton');
+const tabButton=document.getElementById('tabButton');
+const stopButton=document.getElementById('stopButton');
+const modeIndicator=document.getElementById('modeIndicator');
+
+function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+let audioContext=null, analyzer=null, sourceNode=null, stream=null;
+let animationFrameId=null, isVisualizing=false;
+
+const PARTICLE_COUNT=80, FFT_SIZE=1024, SMOOTHING=0.85;
+const particles=[];
+
+class Particle{
+constructor(){ this.reset(); }
+reset(){ this.x=Math.random()*canvas.width; this.y=Math.random()*canvas.height;
+this.size=Math.random()*2+0.8; this.speedX=(Math.random()-0.5)*1.5; this.speedY=(Math.random()-0.5)*1.5;
+this.hue=Math.random()*360; this.alpha=Math.random()*0.4+0.2; this.life=1.0; }
+update(intensity,freqData){
+this.speedX+=(Math.random()-0.5)*intensity*0.3; this.speedY+=(Math.random()-0.5)*intensity*0.3;
+this.speedX*=0.95; this.speedY*=0.95;
+this.x+=this.speedX; this.y+=this.speedY;
+if(this.x<0||this.x>canvas.width)this.speedX*=-0.7;
+if(this.y<0||this.y>canvas.height)this.speedY*=-0.7;
+this.x=Math.max(0,Math.min(canvas.width,this.x));
+this.y=Math.max(0,Math.min(canvas.height,this.y));
+const freqIndex=Math.floor((this.x/canvas.width)*(freqData.length-1));
+const freqValue=freqData[Math.min(freqIndex,freqData.length-1)]||0;
+this.hue=(freqValue/255)*360;
+this.life-=0.003; if(this.life<=0)this.reset(); }
+draw(ctx){ ctx.beginPath(); ctx.arc(this.x,this.y,this.size*2,0,Math.PI*2);
+ctx.fillStyle=`hsla(${this.hue},85%,65%,${this.alpha*this.life})`; ctx.fill(); } }
+
+for(let i=0;i<PARTICLE_COUNT;i++)particles.push(new Particle());
+
+const TARGET_FPS=120, FRAME_DURATION=1000/TARGET_FPS; let lastFrameTime=performance.now();
+
+function drawVisualizer(timestamp){
+if(!analyzer||!isVisualizing)return;
+const delta=timestamp-lastFrameTime;
+if(delta<FRAME_DURATION){ animationFrameId=requestAnimationFrame(drawVisualizer); return; }
+lastFrameTime=timestamp;
+
+const bufferLength=analyzer.frequencyBinCount;
+const freqData=new Uint8Array(bufferLength);
+analyzer.getByteFrequencyData(freqData);
+const timeData=new Uint8Array(analyzer.fftSize);
+analyzer.getByteTimeDomainData(timeData);
+
+let sum=0; for(let i=0;i<bufferLength;i++)sum+=freqData[i];
+const intensity=Math.min(1.0,sum/bufferLength/180);
+
+// GPU Trails: use 'lighter' and semi-transparent overlay
+ctx.globalCompositeOperation='source-over';
+ctx.fillStyle=`rgba(0,0,10,0.15)`; ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.globalCompositeOperation='lighter';
+
+// Frequency bars
+const barCount=Math.min(128, bufferLength), barWidth=canvas.width/barCount, centerY=canvas.height/2;
+for(let i=0;i<barCount;i++){
+const barHeight=(freqData[i]/255)*(canvas.height*0.5)*(0.7+intensity*0.5);
+const hue=(i/barCount)*360; ctx.fillStyle=`hsla(${hue},90%,60%,${0.6+intensity*0.3})`;
+ctx.fillRect(i*barWidth,centerY-barHeight/2,barWidth-1.5,barHeight);}
+
+// Waveform
+ctx.beginPath(); const sliceWidth=canvas.width/analyzer.fftSize; let x=0;
+for(let i=0;i<analyzer.fftSize;i+=2){
+const v=timeData[i]/128.0; const y=v*(canvas.height/4)+centerY;
+if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);
+x+=sliceWidth*2;}
+ctx.strokeStyle=`rgba(255,255,255,${0.7+intensity*0.3})`; ctx.lineWidth=2.5; ctx.stroke();
+
+// Particles
+for(let i=0;i<particles.length;i++){ particles[i].update(intensity,freqData); particles[i].draw(ctx); }
+
+// Center pulse
+const pulseRadius=35+intensity*80, pulseAlpha=0.4+intensity*0.35;
+const grad=ctx.createRadialGradient(canvas.width/2,canvas.height/2,0,canvas.width/2,canvas.height/2,pulseRadius);
+grad.addColorStop(0,`rgba(255,255,255,${pulseAlpha})`);
+grad.addColorStop(0.4,`rgba(100,200,255,${pulseAlpha*0.8})`);
+grad.addColorStop(1,'transparent');
+ctx.beginPath(); ctx.arc(canvas.width/2,canvas.height/2,pulseRadius,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+
+animationFrameId=requestAnimationFrame(drawVisualizer);
+}
+
+// Audio setup functions
+async function setupMicrophone(){ try{ stopVisualization();
+stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+setupAudioContext(stream);
+modeIndicator.textContent='Microphone Active'; modeIndicator.className='mode-indicator mode-mic';
+micButton.disabled=true; tabButton.disabled=true; stopButton.disabled=false; welcomeOverlay.classList.add('hidden');
+isVisualizing=true; particles.forEach(p=>p.reset()); animationFrameId=requestAnimationFrame(drawVisualizer);
+}catch(err){ console.error(err); alert('Mic error: '+(err.message||err.name)); modeIndicator.textContent='Mic Error'; micButton.disabled=false; tabButton.disabled=false; } }
+
+async function setupTabAudio(){ try{ stopVisualization();
+if(!navigator.mediaDevices.getDisplayMedia)throw new Error('Tab audio only works in Chrome/Edge');
+stream=await navigator.mediaDevices.getDisplayMedia({audio:true,video:true});
+const videoTrack=stream.getVideoTracks()[0]; if(videoTrack)videoTrack.onended=()=>stopVisualization();
+setupAudioContext(stream); modeIndicator.textContent='Tab Audio Active'; modeIndicator.className='mode-indicator mode-tab';
+micButton.disabled=true; tabButton.disabled=true; stopButton.disabled=false; welcomeOverlay.classList.add('hidden');
+isVisualizing=true; particles.forEach(p=>p.reset()); animationFrameId=requestAnimationFrame(drawVisualizer);
+}catch(err){ console.error(err); if(err.name==='NotAllowedError'||err.name==='AbortError') alert('You cancelled the tab selection.');
+else alert('Tab audio error: '+(err.message||err.name)); modeIndicator.textContent='Tab Audio Error'; micButton.disabled=false; tabButton.disabled=false; } }
+
+function setupAudioContext(audioStream){
+if(!audioContext||audioContext.state==='closed') audioContext=new (window.AudioContext||window.webkitAudioContext)();
+if(audioContext.state==='suspended') audioContext.resume();
+analyzer=audioContext.createAnalyser(); analyzer.fftSize=FFT_SIZE; analyzer.smoothingTimeConstant=SMOOTHING;
+sourceNode=audioContext.createMediaStreamSource(audioStream); sourceNode.connect(analyzer); }
+
+function stopVisualization(){
+isVisualizing=false;
+if(animationFrameId){ cancelAnimationFrame(animationFrameId); animationFrameId=null; }
+if(stream){ stream.getTracks().forEach(track=>{try{track.stop();}catch(e){} }); stream=null; }
+if(sourceNode){ try{sourceNode.disconnect();}catch(e){} sourceNode=null; }
+if(analyzer){ try{analyzer.disconnect();}catch(e){} analyzer=null; }
+ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#050515'; ctx.fillRect(0,0,canvas.width,canvas.height);
+modeIndicator.textContent='No Audio Source'; modeIndicator.className='mode-indicator';
+micButton.disabled=false; tabButton.disabled=!!(navigator.userAgent.includes('Chrome')||navigator.userAgent.includes('Edg'));
+stopButton.disabled=true; welcomeOverlay.classList.remove('hidden'); }
+
+micButton.addEventListener('click',setupMicrophone);
+tabButton.addEventListener('click',setupTabAudio);
+stopButton.addEventListener('click',stopVisualization);
+});
+</script>
 </body>
 </html>
