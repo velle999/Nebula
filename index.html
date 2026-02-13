@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nebula Fractal Visualizer</title>
+<title>Nebula</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{overflow:hidden;background:#000;color:white;height:100vh;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
-header{padding:15px 20px;background:rgba(0,0,0,0.85);border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;z-index:100;position:relative;}
+header{padding:15px 20px;background:rgba(0,0,0,0.85);border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;z-index:100;position:relative;flex-wrap:wrap;}
 h1{font-size:1.8rem;background:linear-gradient(45deg,#ff00cc,#3333ff,#00ccff,#00ff9d);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;}
-.controls{display:flex;gap:12px;align-items:center;}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
 button{background: linear-gradient(45deg,#2c2c3a,#1a1a25); color:white; border:1px solid rgba(255,255,255,0.15); padding:8px 16px; border-radius:30px; cursor:pointer; font-family:inherit; font-weight:500; transition:all 0.2s; display:flex; align-items:center; gap:8px;}
 button:hover:not(:disabled){transform:translateY(-1px);}
 button:active:not(:disabled){transform:translateY(1px);}
@@ -29,29 +29,41 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%;z-ind
 .instructions li{margin-bottom:8px;}
 .browser-warning{background: rgba(40,20,20,0.8); border:1px solid rgba(255,100,100,0.4); border-radius:12px; padding:18px; margin-top:25px; max-width:600px;}
 footer{position:absolute; bottom:20px; width:100%; text-align:center; z-index:20; color:rgba(255,255,255,0.6); font-size:0.9rem; padding:0 20px;}
+.slider-container, .selector-container{margin:5px; display:flex; align-items:center; gap:8px;}
+input[type=range]{cursor:pointer;}
+select{cursor:pointer; border-radius:12px; padding:5px 10px; background:rgba(30,30,40,0.9); color:white; border:1px solid rgba(255,255,255,0.2);}
 @media(max-width:768px){ .controls{flex-direction:column;align-items:stretch;gap:10px;} .overlay h2{font-size:2.3rem;} button{width:100%;justify-content:center;} }
 </style>
 </head>
 <body>
 <header>
-<h1>NEBULA FRACTAL VISUALIZER</h1>
+<h1>NEBULA</h1>
 <div class="controls">
 <div class="mode-indicator" id="modeIndicator">No Audio Source</div>
 <button id="micButton" class="primary">🎤 Microphone</button>
 <button id="tabButton">🖥️ Tab Audio</button>
 <button id="stopButton" class="danger" disabled>⏹️ Stop</button>
+<div class="slider-container">Intensity: <input type="range" id="intensitySlider" min="0" max="2" step="0.01" value="1"></div>
+<div class="selector-container">Fractal: 
+<select id="fractalType">
+<option value="recursive">Recursive</option>
+<option value="mandelbrot">Mandelbrot</option>
+<option value="julia">Julia</option>
+</select>
+</div>
 </div>
 </header>
 
 <canvas id="visualizer"></canvas>
 
 <div class="overlay" id="welcomeOverlay">
-<h2>Nebula Fractal Visualizer</h2>
+<h2>Nebula</h2>
 <div class="instructions">
 <h3>How to Use</h3>
 <ul>
 <li><strong>Microphone:</strong> Visualize your voice or external audio</li>
 <li><strong>Tab Audio (Chrome/Edge):</strong> Visualize audio playing in another tab</li>
+<li>Use intensity slider and fractal type selector</li>
 <li>Visualizer reacts to bass, mids, and treble frequencies in real-time</li>
 <li>Click "Stop" anytime to pause audio analysis</li>
 </ul>
@@ -60,7 +72,7 @@ footer{position:absolute; bottom:20px; width:100%; text-align:center; z-index:20
 </div>
 
 <footer>
-<p>Fractal Recursive Nebula • 120 FPS • Audio Reactive • Particles + Swirls</p>
+<p>Fractal Recursive Nebula • 120 FPS • Audio Reactive • Particles + Swirls + Kaleidoscope</p>
 </footer>
 
 <script>
@@ -71,13 +83,15 @@ const micButton=document.getElementById('micButton');
 const tabButton=document.getElementById('tabButton');
 const stopButton=document.getElementById('stopButton');
 const modeIndicator=document.getElementById('modeIndicator');
+const intensitySlider=document.getElementById('intensitySlider');
+const fractalTypeSelector=document.getElementById('fractalType');
 
 function resizeCanvas(){canvas.width=window.innerWidth; canvas.height=window.innerHeight;}
 window.addEventListener('resize',resizeCanvas); resizeCanvas();
 
 let audioContext=null, analyzer=null, sourceNode=null, stream=null;
 let animationFrameId=null, isVisualizing=false;
-const PARTICLE_COUNT=100, FFT_SIZE=1024, SMOOTHING=0.85;
+const PARTICLE_COUNT=150, FFT_SIZE=1024, SMOOTHING=0.85;
 const particles=[], TARGET_FPS=120, FRAME_DURATION=1000/TARGET_FPS; let lastFrameTime=performance.now();
 let hueOffset=0, swirlAngle=0;
 
@@ -101,99 +115,90 @@ draw(ctx){ctx.beginPath(); ctx.arc(this.x,this.y,this.size*2,0,Math.PI*2); ctx.f
 }
 for(let i=0;i<PARTICLE_COUNT;i++)particles.push(new Particle());
 
-// Recursive fractal function with brighter neon
+// Recursive fractal
 function drawFractal(x, y, size, angle, depth, intensity) {
-    if (depth <= 0 || size < 1) return;
-
-    // Neon color for fractal branch
-    const neonHue = (hueOffset + depth * 60) % 360;
-    ctx.strokeStyle = `hsla(${neonHue}, 100%, ${60 + intensity * 20}%, ${0.15 + intensity * 0.35})`;
-    ctx.lineWidth = Math.max(1, depth * 0.8);
-
-    // Draw branch
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    const newX = x + Math.cos(angle) * size;
-    const newY = y + Math.sin(angle) * size;
-    ctx.lineTo(newX, newY);
-    ctx.stroke();
-
-    // Recursive branches
-    const branchCount = 2 + Math.floor(intensity * 2);
-    for (let i = 0; i < branchCount; i++) {
-        const newAngle = angle + (-0.5 + Math.random()) * Math.PI / 2;
-        drawFractal(newX, newY, size * 0.7, newAngle, depth - 1, intensity);
-    }
+if(depth<=0||size<1)return;
+const neonHue=(hueOffset+depth*60)%360;
+ctx.strokeStyle=`hsla(${neonHue},100%,${60+intensity*20}%,${0.15+intensity*0.35})`;
+ctx.lineWidth=Math.max(1,depth*0.8);
+ctx.beginPath(); ctx.moveTo(x,y);
+const newX=x+Math.cos(angle)*size;
+const newY=y+Math.sin(angle)*size; ctx.lineTo(newX,newY); ctx.stroke();
+const branchCount=2+Math.floor(intensity*2);
+for(let i=0;i<branchCount;i++){ const newAngle=angle+(-0.5+Math.random())*Math.PI/2;
+drawFractal(newX,newY,size*0.7,newAngle,depth-1,intensity);}
 }
 
-// Swirling nebula with neon glow
-function drawSwirl(intensity) {
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-    const radius = Math.min(canvas.width, canvas.height) / 2.5;
-
-    for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius + i * 20 + Math.sin(swirlAngle + i) * 30, 0, Math.PI * 2);
-        const swirlHue = (hueOffset + i * 60) % 360;
-        ctx.strokeStyle = `hsla(${swirlHue}, 100%, ${50 + intensity * 20}%, ${0.04 + intensity * 0.08})`;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-    }
-
-    swirlAngle += 0.002 + intensity * 0.01;
+// Draw kaleidoscope mirrored layers
+function drawKaleidoscope(intensity){
+ctx.save();
+ctx.translate(canvas.width/2,canvas.height/2);
+for(let i=0;i<6;i++){
+ctx.save();
+ctx.rotate(i*Math.PI/3);
+ctx.scale(1,(i%2===0?1:-1));
+ctx.translate(-canvas.width/2,-canvas.height/2);
+drawFractalsLayer(intensity);
+ctx.restore();
+}
+ctx.restore();
 }
 
-// Center pulse neon glow
-function drawCenterPulse(intensity) {
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const pulseRadius = 35 + intensity * 80;
-    const pulseAlpha = 0.5 + intensity * 0.5;
-
-    const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, pulseRadius);
-    grad.addColorStop(0, `hsla(${hueOffset % 360}, 100%, 95%, ${pulseAlpha})`);
-    grad.addColorStop(0.3, `hsla(${(hueOffset + 120) % 360}, 100%, 75%, ${pulseAlpha * 0.8})`);
-    grad.addColorStop(1, 'transparent');
-
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
-    ctx.fill();
+function drawFractalsLayer(intensity){
+const centerX=canvas.width/2, centerY=canvas.height/2;
+drawFractal(centerX,centerY,80+intensity*50,Math.random()*Math.PI*2,5,intensity);
+drawFractal(centerX,centerY,50+intensity*30,Math.random()*Math.PI*2,4,intensity);
 }
 
-// Draw loop
+// Swirls
+function drawSwirl(intensity){
+const cx=canvas.width/2, cy=canvas.height/2;
+const radius=Math.min(canvas.width,canvas.height)/2.5;
+for(let i=0;i<6;i++){
+ctx.beginPath();
+ctx.arc(cx,cy,radius+i*20+Math.sin(swirlAngle+i)*30,0,Math.PI*2);
+ctx.strokeStyle=`hsla(${(hueOffset+i*60)%360},100%,${50+intensity*20}%,${0.04+intensity*0.08})`;
+ctx.lineWidth=2; ctx.stroke();}
+swirlAngle+=0.002+intensity*0.01;
+}
+
+// Center pulse
+function drawCenterPulse(intensity){
+const centerX=canvas.width/2, centerY=canvas.height/2;
+const pulseRadius=35+intensity*80; const pulseAlpha=0.5+intensity*0.5;
+const grad=ctx.createRadialGradient(centerX,centerY,0,centerX,centerY,pulseRadius);
+grad.addColorStop(0,`hsla(${hueOffset%360},100%,95%,${pulseAlpha})`);
+grad.addColorStop(0.3,`hsla(${(hueOffset+120)%360},100%,75%,${pulseAlpha*0.8})`);
+grad.addColorStop(1,'transparent'); ctx.beginPath(); ctx.arc(centerX,centerY,pulseRadius,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+}
+
+// Draw visualizer
 function drawVisualizer(timestamp){
 if(!analyzer||!isVisualizing)return;
 const delta=timestamp-lastFrameTime; if(delta<FRAME_DURATION){ animationFrameId=requestAnimationFrame(drawVisualizer); return; }
 lastFrameTime=timestamp;
+const intensity=parseFloat(intensitySlider.value);
 
 const bufferLength=analyzer.frequencyBinCount; const freqData=new Uint8Array(bufferLength); analyzer.getByteFrequencyData(freqData);
 const timeData=new Uint8Array(analyzer.fftSize); analyzer.getByteTimeDomainData(timeData);
-let sum=0; for(let i=0;i<bufferLength;i++)sum+=freqData[i]; const intensity=Math.min(1,sum/bufferLength/180);
+let sum=0; for(let i=0;i<bufferLength;i++)sum+=freqData[i]; const audioIntensity=Math.min(1,sum/bufferLength/180)*intensity;
 hueOffset+=0.4;
 
-// Background fade
-ctx.globalCompositeOperation='source-over'; ctx.fillStyle=`rgba(0,0,20,0.12)`; ctx.fillRect(0,0,canvas.width,canvas.height);
+// Background
+ctx.globalCompositeOperation='source-over'; ctx.fillStyle='rgba(0,0,20,0.12)'; ctx.fillRect(0,0,canvas.width,canvas.height);
 ctx.globalCompositeOperation='lighter';
 
-// Swirls
-drawSwirl(intensity);
-
-// Particles
-for(let p of particles){ p.update(intensity,freqData); p.draw(ctx); }
-
-// Fractals from center
-const centerX=canvas.width/2, centerY=canvas.height/2;
-drawFractal(centerX,centerY,80+intensity*50,Math.random()*Math.PI*2,5,intensity);
-drawFractal(centerX,centerY,50+intensity*30,Math.random()*Math.PI*2,4,intensity);
+// Swirls + particles + kaleidoscope
+drawSwirl(audioIntensity);
+for(let p of particles){ p.update(audioIntensity,freqData); p.draw(ctx);}
+drawKaleidoscope(audioIntensity);
 
 // Frequency bars
 const barCount=Math.min(128,bufferLength), barWidth=canvas.width/barCount, centerY2=canvas.height/2;
 for(let i=0;i<barCount;i++){
-const barHeight=(freqData[i]/255)*(canvas.height*0.5)*(0.7+intensity*0.5);
+const barHeight=(freqData[i]/255)*(canvas.height*0.5)*(0.7+audioIntensity*0.5);
 const hue=(i/barCount*360 + hueOffset)%360;
-ctx.fillStyle=`hsla(${hue},90%,60%,${0.5+intensity*0.3})`;
+ctx.fillStyle=`hsla(${hue},90%,60%,${0.5+audioIntensity*0.3})`;
 ctx.fillRect(i*barWidth,centerY2-barHeight/2,barWidth-1.5,barHeight);
 }
 
@@ -201,14 +206,10 @@ ctx.fillRect(i*barWidth,centerY2-barHeight/2,barWidth-1.5,barHeight);
 ctx.beginPath(); const sliceWidth=canvas.width/analyzer.fftSize; let x=0;
 for(let i=0;i<analyzer.fftSize;i+=2){ const v=timeData[i]/128; const y=v*(canvas.height/4)+centerY2;
 if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y); x+=sliceWidth*2;}
-ctx.strokeStyle=`rgba(255,255,255,${0.6+intensity*0.3})`; ctx.lineWidth=2; ctx.stroke();
+ctx.strokeStyle=`rgba(255,255,255,${0.6+audioIntensity*0.3})`; ctx.lineWidth=2; ctx.stroke();
 
 // Center pulse
-const pulseRadius=35+intensity*80, pulseAlpha=0.4+intensity*0.35;
-const grad=ctx.createRadialGradient(centerX,centerY,0,centerX,centerY,pulseRadius);
-grad.addColorStop(0,`hsla(${hueOffset%360},100%,95%,${pulseAlpha})`);
-grad.addColorStop(0.4,`hsla(${(hueOffset+120)%360},80%,70%,${pulseAlpha*0.8})`);
-grad.addColorStop(1,'transparent'); ctx.beginPath(); ctx.arc(centerX,centerY,pulseRadius,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+drawCenterPulse(audioIntensity);
 
 animationFrameId=requestAnimationFrame(drawVisualizer);
 }
