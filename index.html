@@ -7,7 +7,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{overflow:hidden;background:#000;color:white;height:100vh;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
-header{padding:15px 20px;background:rgba(0,0,0,0.85);border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;z-index:100;position:relative;flex-wrap:wrap;}
+header{padding:15px 20px;background:rgba(0,0,0,0.85);border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;z-index:100;position:relative;flex-wrap:wrap;transition:transform 0.3s ease;}
+header.hidden{transform:translateY(-120%);}
 h1{font-size:1.8rem;background:linear-gradient(45deg,#ff00cc,#3333ff,#00ccff,#00ff9d);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;}
 .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
 button{background: linear-gradient(45deg,#2c2c3a,#1a1a25); color:white; border:1px solid rgba(255,255,255,0.15); padding:8px 16px; border-radius:30px; cursor:pointer; font-family:inherit; font-weight:500; transition:all 0.2s; display:flex; align-items:center; gap:8px;}
@@ -51,6 +52,7 @@ select{cursor:pointer; border-radius:12px; padding:5px 10px; background:rgba(30,
 <option value="julia">Julia</option>
 </select>
 </div>
+<button id="toggleMenuButton">👁️ Hide Menu</button>
 </div>
 </header>
 
@@ -85,6 +87,20 @@ const stopButton=document.getElementById('stopButton');
 const modeIndicator=document.getElementById('modeIndicator');
 const intensitySlider=document.getElementById('intensitySlider');
 const fractalTypeSelector=document.getElementById('fractalType');
+const toggleMenuButton=document.getElementById('toggleMenuButton');
+const header=document.querySelector('header');
+let menuHidden=false;
+
+toggleMenuButton.addEventListener('click',()=>{
+    menuHidden=!menuHidden;
+    if(menuHidden){
+        header.classList.add('hidden');
+        toggleMenuButton.textContent='👁️ Show Menu';
+    } else {
+        header.classList.remove('hidden');
+        toggleMenuButton.textContent='👁️ Hide Menu';
+    }
+});
 
 function resizeCanvas(){canvas.width=window.innerWidth; canvas.height=window.innerHeight;}
 window.addEventListener('resize',resizeCanvas); resizeCanvas();
@@ -224,7 +240,7 @@ isVisualizing=true; particles.forEach(p=>p.reset()); animationFrameId=requestAni
 async function setupTabAudio(){try{stopVisualization();
 if(!navigator.mediaDevices.getDisplayMedia)throw new Error('Tab audio only works in Chrome/Edge');
 stream=await navigator.mediaDevices.getDisplayMedia({audio:true,video:true});
-const videoTrack=stream.getVideoTracks()[0]; if(videoTrack)videoTrack.onended=()=>stopVisualization();
+const videoTrack=stream.getVideoTracks()[0]; if(videoTrack) videoTrack.onended=()=>stopVisualization();
 setupAudioContext(stream); modeIndicator.textContent='Tab Audio Active'; modeIndicator.className='mode-indicator mode-tab';
 micButton.disabled=true; tabButton.disabled=true; stopButton.disabled=false; welcomeOverlay.classList.add('hidden');
 isVisualizing=true; particles.forEach(p=>p.reset()); animationFrameId=requestAnimationFrame(drawVisualizer);}catch(err){console.error(err); if(err.name==='NotAllowedError'||err.name==='AbortError') alert('You cancelled the tab selection.'); else alert('Tab audio error: '+(err.message||err.name)); modeIndicator.textContent='Tab Audio Error'; micButton.disabled=false; tabButton.disabled=false;}}
